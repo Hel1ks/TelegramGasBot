@@ -81,12 +81,12 @@
             public const string PersonalAccounts = "Ваші особові рахунки:";            
         }
 
-        public static class AddPersonalAccountTab
+        public static class ConfirmPersonalAccountTab
         {
             public const string PersonalAccountDuplicationResponse = "Особовий рахунок {0} вже додано";
             public const string ErrorResponse = "Сталася помилка.Будь ласка спробуйте ще раз пізніше";
             public const string PersonalAccountNotFoundResponse = "Особовий рахунок {0} не знайдено";
-            public const string SuccessResponse = "Особовий рахунок {0} успішно додано";
+            public const string SuccessResponse = "Підтвердіть свою приналежність до особового рахунку {0}, вказавши серійний номер лічильника у форматі ХХХХХХХХ, де Х - цифри";
         }
 
         public static class SelectPersonalAccountsTab
@@ -94,11 +94,11 @@
             public const string PersonalAccounts = "Ваші особові рахунки:";
         }
 
-        public static class AddPersonalAccountTabNoPersonalAccountAdded
+        public static class ConfirmPersonalAccountTabNoPersonalAccountAdded
         {
             public const string ErrorResponse = "Сталася помилка.Будь ласка спробуйте ще раз пізніше";
             public const string PersonalAccountNotFoundResponse = "Особовий рахунок {0} не знайдено";
-            public const string SuccessResponse = "Особовий рахунок {0} успішно додано";
+            public const string SuccessResponse = "Підтвердіть свою приналежність до особового рахунку {0}, вказавши серійний номер лічильника у форматі ХХХХХХХХ, де Х - цифри";
         }
 
         public static class SelectReadindsTab
@@ -113,6 +113,30 @@
             public const string Payments = "Платежі";
             public const string Error = "Не вдалося отримати платежі";
             public const string PaymentItem = "{0} - {1}грн";
+        }
+
+        public static class SavePersonalAccount
+        {
+            public const string ErrorResponse = "Сталася помилка. Спробуйте будь-ласка пізніше";
+            public const string MeterNumberDoNotMatchResponse = "Неправильний номер лічильника. Особовий рахунок {0} не було додано";
+            public const string SuccessResponse = "Особовий рахунок {0} за адресою {1} успішно додано";
+        }
+
+        public static class SavePersonalAccountNoPersonalAccountAdded
+        {
+            public const string ErrorResponse = "Сталася помилка. Спробуйте будь-ласка пізніше";
+            public const string MeterNumberDoNotMatchResponse = "Неправильний номер лічильника. Особовий рахунок {0} не було додано";
+            public const string SuccessResponse = "Особовий рахунок {0} за адресою {1} успішно додано";
+        }
+
+        public static class InvalidMeterNumberTabNoPersonalAccountAdded
+        {
+            public const string DefaultResponse = "Формат номера лічильника неправильний";
+        }
+
+        public static class InvalidMeterNumberTab
+        {
+            public const string DefaultResponse = "Формат номера лічильника неправильний";
         }
     }
 }

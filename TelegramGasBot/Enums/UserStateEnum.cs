@@ -13,5 +13,7 @@
         AddingPersonalAccountTab,
         DeletingPersonalAccountTab,
         SendReadingsTab,
+        СonfirmAddingPersonalAccountTab,
+        СonfirmAddingPersonalAccountNoPersonalAccountAdded,
     }
 }

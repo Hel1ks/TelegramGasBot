@@ -35,7 +35,7 @@ namespace TelegramGasBot.Services.Command
                 {
                     MenuItemsConstants.MainMenu => UserCommandEnum.ReturnToMenuTabNoPersonalAccountAdded,
                     _ => Regex.IsMatch(message, UserInputPatterns.PersonalAccountPattern) ?
-                        UserCommandEnum.AddPersonalAccountTabNoPersonalAccountAdded :
+                        UserCommandEnum.ConfirmPersonalAccountTabNoPersonalAccountAdded :
                         UserCommandEnum.InvalidPersonalAccountFormatNoPersonalAccountAdded
                 },
                 UserStateEnum.MenuTab => message switch
@@ -75,7 +75,7 @@ namespace TelegramGasBot.Services.Command
                 {
                     MenuItemsConstants.PersonalAccounts => UserCommandEnum.SelectPersonalAccountsTab,
                     _ => Regex.IsMatch(message, UserInputPatterns.PersonalAccountPattern) ? 
-                        UserCommandEnum.AddPersonalAccountTab : 
+                        UserCommandEnum.ConfirmPersonalAccountTab : 
                         UserCommandEnum.InvalidPersonalAccountFormat
                 },
                 UserStateEnum.SendReadingsTab => message switch
@@ -84,6 +84,20 @@ namespace TelegramGasBot.Services.Command
                     _ => Regex.IsMatch(message, UserInputPatterns.MeterReadingPattern) ?
                         UserCommandEnum.SendReadingsTab:
                         UserCommandEnum.InvalidReadingsFormatTab
+                },
+                UserStateEnum.СonfirmAddingPersonalAccountTab => message switch
+                {
+                    MenuItemsConstants.MainMenu => UserCommandEnum.ReturnToMenuTab,
+                    _ => Regex.IsMatch(message, UserInputPatterns.MeterNumberPattern) ?
+                        UserCommandEnum.SavePersonalAccount :
+                        UserCommandEnum.InvalidMeterNumberTab
+                },
+                UserStateEnum.СonfirmAddingPersonalAccountNoPersonalAccountAdded => message switch
+                {
+                    MenuItemsConstants.MainMenu => UserCommandEnum.ReturnToMenuTabNoPersonalAccountAdded,
+                    _ => Regex.IsMatch(message, UserInputPatterns.MeterNumberPattern) ?
+                        UserCommandEnum.SavePersonalAccountNoPersonalAccountAdded :
+                        UserCommandEnum.InvalidMeterNumberTabNoPersonalAccountAdded
                 },
                 _ => UserCommandEnum.Unknown
             };

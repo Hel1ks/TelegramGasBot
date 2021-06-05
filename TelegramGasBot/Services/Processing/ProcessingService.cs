@@ -55,6 +55,8 @@ namespace TelegramGasBot.Services.Processing
                 UserStateEnum.AddingPersonalAccountTab => new[] { MenuItemsConstants.PersonalAccounts },
                 UserStateEnum.DeletingPersonalAccountTab => accountDto.PersonalAccounts.Select(a => string.Format(MenuItemsConstants.DeleteSpecificPersonalAccount, a.PersonalAccountNumber)).Append(MenuItemsConstants.PersonalAccounts),
                 UserStateEnum.SendReadingsTab => new[] { MenuItemsConstants.MainMenu },
+                UserStateEnum.СonfirmAddingPersonalAccountTab => new[] { MenuItemsConstants.MainMenu },
+                UserStateEnum.СonfirmAddingPersonalAccountNoPersonalAccountAdded => new[] { MenuItemsConstants.MainMenu },
                 _ => new[] { MenuItemsConstants.Start }
             };
 
@@ -104,7 +106,7 @@ namespace TelegramGasBot.Services.Processing
             return CommandResponseConstants.SelectAddPersonalAccountTabNoPersonalAccountAdded.DefaultResponse;
         }
 
-        private async Task<string> AddPersonalAccountTabNoPersonalAccountAdded(AccountModel accountDto, string message)
+        private async Task<string> ConfirmPersonalAccountTabNoPersonalAccountAdded(AccountModel accountDto, string message)
         {
             var apiResponse = await gasApiService.GetPersonalAccountAsync(
                new GetPersonalAccountRequestDto()
@@ -118,7 +120,7 @@ namespace TelegramGasBot.Services.Processing
 
                 await this.accountService.UpdateAsync(accountDto);
 
-                return CommandResponseConstants.AddPersonalAccountTabNoPersonalAccountAdded.ErrorResponse;
+                return CommandResponseConstants.ConfirmPersonalAccountTabNoPersonalAccountAdded.ErrorResponse;
             }
 
             if (apiResponse.ResponseCode == ResponseCodeEnum.NotFound)
@@ -127,22 +129,15 @@ namespace TelegramGasBot.Services.Processing
 
                 await this.accountService.UpdateAsync(accountDto);
 
-                return string.Format(CommandResponseConstants.AddPersonalAccountTabNoPersonalAccountAdded.PersonalAccountNotFoundResponse, message);
+                return string.Format(CommandResponseConstants.ConfirmPersonalAccountTabNoPersonalAccountAdded.PersonalAccountNotFoundResponse, message);
             }
 
-            accountDto.State.StateEnum = UserStateEnum.MenuTab;
-            accountDto.PersonalAccounts = new[]
-            {
-                new PersonalAccountModel()
-                {
-                    PersonalAccountNumber = message,
-                    Address = apiResponse.Address
-                }
-            };
+            accountDto.State.StateEnum = UserStateEnum.СonfirmAddingPersonalAccountNoPersonalAccountAdded;
+            accountDto.State.StateItemValue = message;
 
             await this.accountService.UpdateAsync(accountDto);
 
-            return string.Format(CommandResponseConstants.AddPersonalAccountTabNoPersonalAccountAdded.SuccessResponse, message);
+            return string.Format(CommandResponseConstants.ConfirmPersonalAccountTabNoPersonalAccountAdded.SuccessResponse, message);
         }
 
         private async Task<string> InvalidPersonalAccountFormatNoPersonalAccountAdded(AccountModel accountDto, string message)
@@ -269,11 +264,11 @@ namespace TelegramGasBot.Services.Processing
             return CommandResponseConstants.SelectDeletePersonalAccountTab.DefaultResponse;
         }
 
-        private async Task<string> AddPersonalAccountTab(AccountModel accountDto, string message)
+        private async Task<string> ConfirmPersonalAccountTab(AccountModel accountDto, string message)
         {
             if (accountDto.PersonalAccounts.Any(a => a.PersonalAccountNumber == message))
             {
-                return string.Format(CommandResponseConstants.AddPersonalAccountTab.PersonalAccountDuplicationResponse, message);
+                return string.Format(CommandResponseConstants.ConfirmPersonalAccountTab.PersonalAccountDuplicationResponse, message);
             }
 
             var apiResponse = await gasApiService.GetPersonalAccountAsync(
@@ -288,7 +283,7 @@ namespace TelegramGasBot.Services.Processing
 
                 await this.accountService.UpdateAsync(accountDto);
 
-                return CommandResponseConstants.AddPersonalAccountTab.ErrorResponse;
+                return CommandResponseConstants.ConfirmPersonalAccountTab.ErrorResponse;
             }
 
             if (apiResponse.ResponseCode == ResponseCodeEnum.NotFound)
@@ -297,22 +292,15 @@ namespace TelegramGasBot.Services.Processing
 
                 await this.accountService.UpdateAsync(accountDto);
 
-                return string.Format(CommandResponseConstants.AddPersonalAccountTab.PersonalAccountNotFoundResponse, message);
+                return string.Format(CommandResponseConstants.ConfirmPersonalAccountTab.PersonalAccountNotFoundResponse, message);
             }
 
-            accountDto.State.StateEnum = UserStateEnum.MenuTab;
-
-            var newPersonalAccount = new PersonalAccountModel()
-            {
-                PersonalAccountNumber = message,
-                Address = apiResponse.Address
-            };
-
-            accountDto.PersonalAccounts = accountDto.PersonalAccounts.Append(newPersonalAccount);
+            accountDto.State.StateEnum = UserStateEnum.СonfirmAddingPersonalAccountTab;
+            accountDto.State.StateItemValue = message;
 
             await this.accountService.UpdateAsync(accountDto);
 
-            return string.Format(CommandResponseConstants.AddPersonalAccountTab.SuccessResponse, message);
+            return string.Format(CommandResponseConstants.ConfirmPersonalAccountTab.SuccessResponse, message);
         }
 
         private async Task<string> InvalidPersonalAccountFormat(AccountModel accountDto, string message)
@@ -399,6 +387,107 @@ namespace TelegramGasBot.Services.Processing
             await this.accountService.UpdateAsync(accountDto);
 
             return CommandResponseConstants.InvalidReadingsFormatTab.DefaultResponse;
+        }
+
+        private async Task<string> SavePersonalAccount(AccountModel accountDto, string message)
+        {
+            var apiResponse = await gasApiService.GetPersonalAccountAsync(
+               new GetPersonalAccountRequestDto()
+               {
+                   PersonalAccountNumber = accountDto.State.StateItemValue,
+               });
+
+            if (apiResponse == null || apiResponse.ResponseCode != ResponseCodeEnum.Success || apiResponse.MeterNumber == null)
+            {
+                accountDto.State.StateEnum = UserStateEnum.PersonalAccountsTab;
+
+                await this.accountService.UpdateAsync(accountDto);
+
+                return CommandResponseConstants.SavePersonalAccount.ErrorResponse;
+            }
+
+            if (message != apiResponse.MeterNumber)
+            {
+                accountDto.State.StateEnum = UserStateEnum.PersonalAccountsTab;
+
+                await this.accountService.UpdateAsync(accountDto);
+
+                return string.Format(CommandResponseConstants.SavePersonalAccount.MeterNumberDoNotMatchResponse, accountDto.State.StateItemValue);
+            }
+
+            accountDto.State.StateEnum = UserStateEnum.MenuTab;
+
+            var newPersonalAccount = new PersonalAccountModel()
+            {
+                PersonalAccountNumber = accountDto.State.StateItemValue,
+                Address = apiResponse.Address
+            };
+
+            accountDto.PersonalAccounts = accountDto.PersonalAccounts.Append(newPersonalAccount);
+
+            await this.accountService.UpdateAsync(accountDto);
+
+            return string.Format(CommandResponseConstants.SavePersonalAccount.SuccessResponse, accountDto.State.StateItemValue, apiResponse.Address);
+        }
+
+        private async Task<string> SavePersonalAccountNoPersonalAccountAdded(AccountModel accountDto, string message)
+        {
+            var apiResponse = await gasApiService.GetPersonalAccountAsync(
+               new GetPersonalAccountRequestDto()
+               {
+                   PersonalAccountNumber = accountDto.State.StateItemValue,
+               });
+
+            if (apiResponse == null || apiResponse.ResponseCode != ResponseCodeEnum.Success || apiResponse.MeterNumber == null)
+            {
+                accountDto.State.StateEnum = UserStateEnum.PersonalAccountsTabNoPersonalAccountAdded;
+
+                await this.accountService.UpdateAsync(accountDto);
+
+                return CommandResponseConstants.SavePersonalAccountNoPersonalAccountAdded.ErrorResponse;
+            }
+
+            if (message != apiResponse.MeterNumber)
+            {
+                accountDto.State.StateEnum = UserStateEnum.PersonalAccountsTabNoPersonalAccountAdded;
+
+                await this.accountService.UpdateAsync(accountDto);
+
+                return string.Format(CommandResponseConstants.SavePersonalAccountNoPersonalAccountAdded.MeterNumberDoNotMatchResponse, accountDto.State.StateItemValue);
+            }
+
+            accountDto.State.StateEnum = UserStateEnum.MenuTab;
+
+            accountDto.PersonalAccounts = new[]
+            {
+                new PersonalAccountModel()
+                {
+                    PersonalAccountNumber = accountDto.State.StateItemValue,
+                    Address = apiResponse.Address
+                }
+            };
+
+            await this.accountService.UpdateAsync(accountDto);
+
+            return string.Format(CommandResponseConstants.SavePersonalAccountNoPersonalAccountAdded.SuccessResponse, accountDto.State.StateItemValue, apiResponse.Address);
+        }
+
+        private async Task<string> InvalidMeterNumberTabNoPersonalAccountAdded(AccountModel accountDto, string message)
+        {
+            accountDto.State.StateEnum = UserStateEnum.PersonalAccountsTabNoPersonalAccountAdded;
+
+            await this.accountService.UpdateAsync(accountDto);
+
+            return CommandResponseConstants.InvalidMeterNumberTabNoPersonalAccountAdded.DefaultResponse;
+        }
+
+        private async Task<string> InvalidMeterNumberTab(AccountModel accountDto, string message)
+        {
+            accountDto.State.StateEnum = UserStateEnum.PersonalAccountsTab;
+
+            await this.accountService.UpdateAsync(accountDto);
+
+            return CommandResponseConstants.InvalidMeterNumberTab.DefaultResponse;
         }
 
         private async Task<string> Unknown(AccountModel accountDto, string message)
