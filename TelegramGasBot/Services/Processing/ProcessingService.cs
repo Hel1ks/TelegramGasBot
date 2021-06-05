@@ -344,7 +344,7 @@ namespace TelegramGasBot.Services.Processing
 
                 await this.accountService.UpdateAsync(accountDto);
 
-                var telegramMessage = new StringBuilder(string.Format(CommandResponseConstants.DeletePersonalAccountTab.ManyAccountResponse, message));
+                var telegramMessage = new StringBuilder(string.Format(CommandResponseConstants.DeletePersonalAccountTab.ManyAccountResponse, personalAccountNumber));
                 telegramMessage.Append(Environment.NewLine + CommandResponseConstants.DeletePersonalAccountTab.PersonalAccounts + Environment.NewLine);
                 telegramMessage.AppendJoin(Environment.NewLine, accountDto.PersonalAccounts.Select(a => a.PersonalAccountNumber));
 
