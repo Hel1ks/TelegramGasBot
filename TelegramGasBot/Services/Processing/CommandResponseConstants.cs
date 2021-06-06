@@ -138,5 +138,30 @@
         {
             public const string DefaultResponse = "Формат номера лічильника неправильний";
         }
+
+        public static class EnterPaymentAmountTab
+        {
+            public const string DefaultResponse = "Баланс особового рахунку {0} - {1} грн. Введіть суму для оплати у гривнях у форматі ХXXXX.XX";
+        }
+
+        public static class InvalidPaymentAmountFormatTab
+        {
+            public const string DefaultResponse = "Неправильний формати суми платежу";
+        }
+
+        public static class CompletePaymentTab
+        {
+            public const string DefaultResponse = "Здійсніть оплату";
+        }
+
+        public static class PaymentApprovedTab
+        {
+            public const string DefaultResponse = "Оплата підтверджена";
+        }
+
+        public static class PaymentSuccessfullTab
+        {
+            public const string DefaultResponse = "Оплата особового рахунку {0} на суму {1} грн здійснена успішно";
+        }
     }
 }

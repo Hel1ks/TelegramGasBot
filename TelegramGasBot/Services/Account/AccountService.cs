@@ -19,7 +19,7 @@ namespace TelegramGasBot.Services.Account
 
         public async Task<AccountModel> GetAccountByChatIdAsync(long? chatId)
         {
-            var account = await accounts.FindAsync<AccountModel>(acc => acc.ChatId == chatId);
+            var account = await accounts.FindAsync(acc => acc.ChatId == chatId);
 
             return await account.FirstOrDefaultAsync();
         }

@@ -1,10 +1,10 @@
-﻿using TelegramGasBot.Enums;
-using TelegramGasBot.Services.Account.Models;
+﻿using System.Threading.Tasks;
+using Telegram.Bot.Types;
 
 namespace TelegramGasBot.Services.Command
 {
     public interface ICommandService
     {
-        UserCommandEnum GetCommand(string message, AccountModel account);
+        Task<GetCommandDto> GetCommandAsync(Update request);
     }
 }

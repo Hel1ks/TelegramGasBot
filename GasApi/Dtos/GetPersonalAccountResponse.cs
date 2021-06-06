@@ -7,5 +7,7 @@
         public string Address { get; set; }
 
         public string MeterNumber { get; set; }
+
+        public decimal Balance { get; set; }
     }
 }

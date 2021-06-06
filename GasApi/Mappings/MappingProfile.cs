@@ -14,7 +14,7 @@ namespace GasApi.Mappings
                 .AfterMap((src, dest) => dest.ResponseCode = ResponseCodeEnum.Success.ToString());
             CreateMap<UserDataEntity, GetPaymentsResponse>()
                 .AfterMap((src, dest) => dest.ResponseCode = ResponseCodeEnum.Success.ToString());
-            CreateMap<PaymentEntity, PaymentDto>();
+            CreateMap<PaymentEntity, PaymentDto>().ReverseMap();
             CreateMap<ReadingEntity, ReadingDto>().ReverseMap();
         }
     }

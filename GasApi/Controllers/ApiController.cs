@@ -31,5 +31,9 @@ namespace GasApi.Controllers
         [HttpPost("GetPayments")]
         public async Task<GetPaymentsResponse> GetPayments([FromBody] GetPaymentsRequest request) =>
             await this.mediator.Send(request);
+
+        [HttpPost("CreatePayment")]
+        public async Task<CreatePaymentResponse> CreatePayment([FromBody] CreatePaymentRequest request) =>
+            await this.mediator.Send(request);
     }
 }

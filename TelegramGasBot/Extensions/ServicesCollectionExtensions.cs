@@ -7,6 +7,7 @@ using TelegramGasBot.Configuration;
 using TelegramGasBot.Services.Account;
 using TelegramGasBot.Services.Command;
 using TelegramGasBot.Services.GasApi;
+using TelegramGasBot.Services.Payment;
 using TelegramGasBot.Services.Processing;
 using TelegramGasBot.Services.Telegram;
 
@@ -14,9 +15,9 @@ namespace TelegramGasBot.Extensions
 {
     public static class ServicesCollectionExtensions
     {
-        public static void AddTelegramBot(this IServiceCollection services, IConfiguration configuration)
+        public static void AddTelegramBot(this IServiceCollection services)
         {
-            var botSettings = configuration.GetSection(nameof(TelegramBotSettings)).Get<TelegramBotSettings>();
+            var botSettings = services.BuildServiceProvider().GetRequiredService<TelegramBotSettings>();
 
             var telegramBotClient = new TelegramBotClient(botSettings.ApiToken);
 
@@ -28,12 +29,14 @@ namespace TelegramGasBot.Extensions
         public static void AddServices(this IServiceCollection services)
         {
             services.AddSingleton(sp => sp.GetRequiredService<IOptions<TelegramBotDatabaseSettings>>().Value);
+            services.AddSingleton(sp => sp.GetRequiredService<IOptions<TelegramBotSettings>>().Value);
 
             services.AddTransient<IAccountService, AccountService>();
             services.AddTransient<ICommandService, CommandService>();
             services.AddTransient<ITelegramService, TelegramService>();
             services.AddTransient<IProcessingService, ProcessingService>();
             services.AddTransient<IGasApiService, GasApiService>();
+            services.AddTransient<IPaymentService, PaymentService>();
         }
 
         public static void AddGasApiHttpClient(this IServiceCollection services, IConfiguration configuration)

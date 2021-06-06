@@ -11,5 +11,6 @@
         public const string Payments = "Платежі";
         public const string SendReadings = "Подати покази {0}";
         public const string DeleteSpecificPersonalAccount = "Видалити {0}";
+        public const string Pay = "Оплатити {0}";
     }
 }

@@ -12,5 +12,7 @@ namespace TelegramGasBot.Services.GasApi
         Task<GetPersonalAccountResponseDto> GetPersonalAccountAsync(GetPersonalAccountRequestDto requestDto);
 
         Task<GetReadingsResponseDto> GetReadingsAsync(GetReadingsRequestDto requestDto);
+
+        Task<CreatePaymentResponseDto> CreatePaymentAsync(CreatePaymentRequestDto requestDto);
     }
 }

@@ -5,6 +5,7 @@
         GetReadings,
         GetPersonalAccount,
         GetPayments,
-        CreateReading
+        CreateReading,
+        CreatePayment
     }
 }

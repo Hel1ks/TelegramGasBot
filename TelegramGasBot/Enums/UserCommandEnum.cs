@@ -26,5 +26,10 @@
         SavePersonalAccountNoPersonalAccountAdded,
         InvalidMeterNumberTabNoPersonalAccountAdded,
         InvalidMeterNumberTab,
+        EnterPaymentAmountTab,
+        CompletePaymentTab,
+        InvalidPaymentAmountFormatTab,
+        PaymentApprovedTab,
+        PaymentSuccessfullTab,
     }
 }

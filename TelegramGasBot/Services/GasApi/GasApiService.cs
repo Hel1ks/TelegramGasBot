@@ -26,6 +26,9 @@ namespace TelegramGasBot.Services.GasApi
         public async Task<GetReadingsResponseDto> GetReadingsAsync(GetReadingsRequestDto requestDto) =>
             await ApiCall<GetReadingsResponseDto, GetReadingsRequestDto>(requestDto, GasApiEndpointsEnum.GetReadings);
 
+        public async Task<CreatePaymentResponseDto> CreatePaymentAsync(CreatePaymentRequestDto requestDto) =>
+            await ApiCall<CreatePaymentResponseDto, CreatePaymentRequestDto>(requestDto, GasApiEndpointsEnum.CreatePayment);
+
         private async Task<TResponse> ApiCall<TResponse, TRequest>(TRequest requestDto, GasApiEndpointsEnum endpointEnum) where TResponse : class
         {
             var endpoint = endpointEnum.ToString();

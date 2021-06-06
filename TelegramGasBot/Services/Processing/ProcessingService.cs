@@ -9,8 +9,11 @@ using TelegramGasBot.Constants;
 using TelegramGasBot.Enums;
 using TelegramGasBot.Services.Account;
 using TelegramGasBot.Services.Account.Models;
+using TelegramGasBot.Services.Command;
 using TelegramGasBot.Services.GasApi;
 using TelegramGasBot.Services.GasApi.Dtos;
+using TelegramGasBot.Services.Payment;
+using TelegramGasBot.Services.Telegram;
 
 namespace TelegramGasBot.Services.Processing
 {
@@ -18,27 +21,31 @@ namespace TelegramGasBot.Services.Processing
     {
         private readonly IAccountService accountService;
         private readonly IGasApiService gasApiService;
+        private readonly ITelegramService telegramService;
+        private readonly IPaymentService paymentService;
 
-        public ProcessingService(IAccountService accountService, IGasApiService gasApiService)
+        public ProcessingService(
+            IAccountService accountService, 
+            IGasApiService gasApiService, 
+            ITelegramService telegramService,
+            IPaymentService paymentService)
         {
             this.accountService = accountService;
             this.gasApiService = gasApiService;
+            this.telegramService = telegramService;
+            this.paymentService = paymentService;
         }
 
-        public async Task<ProcessCommandResponseDto> ProcessCommandAsync(UserCommandEnum commandEnum, AccountModel accountDto, string message)
+        public async Task ProcessCommandAsync(GetCommandDto dto)
         {
-            var methodName = commandEnum.ToString();
+            var methodName = dto.CommandEnum.ToString();
             var method = typeof(ProcessingService).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
 
-            var responseMessage = await (Task<string>)method.Invoke(this, new object[] { accountDto, message });
+            var responseMessage = await (Task<string>)method.Invoke(this, new object[] { dto.AccountDto, dto.Message});
 
-            var menuItems = this.GetMenuItems(accountDto);
+            var menuItems = this.GetMenuItems(dto.AccountDto);
 
-            return new ProcessCommandResponseDto()
-            {
-                Message = responseMessage,
-                MenuItems = menuItems
-            };
+            this.telegramService.SendTelegramMessage(dto.AccountDto.ChatId, responseMessage, menuItems);
         }
 
         private IEnumerable<string> GetMenuItems(AccountModel accountDto) =>
@@ -50,13 +57,15 @@ namespace TelegramGasBot.Services.Processing
                 UserStateEnum.AddingPersonalAccountNoPersonalAccountAdded => new[] { MenuItemsConstants.MainMenu },
                 UserStateEnum.MenuTab => new[] { MenuItemsConstants.Readings, MenuItemsConstants.Payments, MenuItemsConstants.PersonalAccounts },
                 UserStateEnum.ReadingsTab => accountDto.PersonalAccounts.Select(a => string.Format(MenuItemsConstants.SendReadings, a.PersonalAccountNumber)).Append(MenuItemsConstants.MainMenu),
-                UserStateEnum.PaymentsTab => new[] { MenuItemsConstants.MainMenu },
+                UserStateEnum.PaymentsTab => accountDto.PersonalAccounts.Select(a => string.Format(MenuItemsConstants.Pay, a.PersonalAccountNumber)).Append(MenuItemsConstants.MainMenu),
                 UserStateEnum.PersonalAccountsTab => new[] { MenuItemsConstants.AddPersonalAccount, MenuItemsConstants.DeletePersonalAccount, MenuItemsConstants.MainMenu },
                 UserStateEnum.AddingPersonalAccountTab => new[] { MenuItemsConstants.PersonalAccounts },
                 UserStateEnum.DeletingPersonalAccountTab => accountDto.PersonalAccounts.Select(a => string.Format(MenuItemsConstants.DeleteSpecificPersonalAccount, a.PersonalAccountNumber)).Append(MenuItemsConstants.PersonalAccounts),
                 UserStateEnum.SendReadingsTab => new[] { MenuItemsConstants.MainMenu },
                 UserStateEnum.СonfirmAddingPersonalAccountTab => new[] { MenuItemsConstants.MainMenu },
                 UserStateEnum.СonfirmAddingPersonalAccountNoPersonalAccountAdded => new[] { MenuItemsConstants.MainMenu },
+                UserStateEnum.EneteringPaymentAmountTab => new[] { MenuItemsConstants.MainMenu },
+                UserStateEnum.CompletePaymentTab => new[] { MenuItemsConstants.MainMenu },
                 _ => new[] { MenuItemsConstants.Start }
             };
 
@@ -489,6 +498,80 @@ namespace TelegramGasBot.Services.Processing
 
             return CommandResponseConstants.InvalidMeterNumberTab.DefaultResponse;
         }
+
+        private async Task<string> EnterPaymentAmountTab(AccountModel accountDto, string message)
+        {
+            var personalAccountNumberToSendReadings = message[9..];
+
+            accountDto.State.StateEnum = UserStateEnum.EneteringPaymentAmountTab;
+            accountDto.State.StateItemValue = personalAccountNumberToSendReadings;
+
+            await this.accountService.UpdateAsync(accountDto);
+
+            var apiResponse = await gasApiService.GetPersonalAccountAsync(
+               new GetPersonalAccountRequestDto()
+               {
+                   PersonalAccountNumber = accountDto.State.StateItemValue,
+               });
+
+            var balance = apiResponse.Balance;
+
+            return string.Format(CommandResponseConstants.EnterPaymentAmountTab.DefaultResponse, personalAccountNumberToSendReadings, balance);
+        }
+
+        private async Task<string> InvalidPaymentAmountFormatTab(AccountModel accountDto, string message)
+        {
+            accountDto.State.StateEnum = UserStateEnum.PaymentsTab;
+
+            await this.accountService.UpdateAsync(accountDto);
+
+            return CommandResponseConstants.InvalidPaymentAmountFormatTab.DefaultResponse;
+        }
+
+        private async Task<string> CompletePaymentTab(AccountModel accountDto, string message)
+        {
+            var amount = decimal.Parse(message, CultureInfo.InvariantCulture);
+
+            var paymentId = await this.paymentService.CreateAsync(new PaymentModel()
+            {
+                PersonalAccountNumber = accountDto.State.StateItemValue,
+                Amount = amount
+            });
+
+            accountDto.State.StateEnum = UserStateEnum.CompletePaymentTab;
+            accountDto.State.StateItemValue = paymentId;
+
+            await this.accountService.UpdateAsync(accountDto);
+
+            this.telegramService.SendTelegramPayment(accountDto.ChatId, message, paymentId);
+
+            return CommandResponseConstants.CompletePaymentTab.DefaultResponse;
+        }
+
+        private async Task<string> PaymentApprovedTab(AccountModel accountDto, string message)
+        {
+            this.telegramService.ConfirmTelegramPayment(message);
+
+            return CommandResponseConstants.PaymentApprovedTab.DefaultResponse;
+        }
+
+        private async Task<string> PaymentSuccessfullTab(AccountModel accountDto, string message)
+        {
+            var payment = await this.paymentService.GetPaymentByIdAsync(message);
+
+            var apiResponse = await gasApiService.CreatePaymentAsync(
+               new CreatePaymentRequestDto()
+               {
+                   PersonalAccountNumber = payment.PersonalAccountNumber,
+                   Payment = new PaymentDto()
+                   {
+                       Amount = payment.Amount,
+                       DateTime = DateTime.Now
+                   }
+               });
+
+            return string.Format(CommandResponseConstants.PaymentSuccessfullTab.DefaultResponse, payment.PersonalAccountNumber, payment.Amount);
+        }     
 
         private async Task<string> Unknown(AccountModel accountDto, string message)
         {

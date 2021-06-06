@@ -20,14 +20,14 @@ namespace TelegramGasBot
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<TelegramBotDatabaseSettings>(
-                Configuration.GetSection(nameof(TelegramBotDatabaseSettings)));
+            services.Configure<TelegramBotDatabaseSettings>(this.Configuration.GetSection(nameof(TelegramBotDatabaseSettings)));
+            services.Configure<TelegramBotSettings>(this.Configuration.GetSection(nameof(TelegramBotSettings)));
 
             services.AddServices();
 
             services.AddGasApiHttpClient(Configuration);
 
-            services.AddTelegramBot(Configuration);
+            services.AddTelegramBot();
 
             services.AddControllers().AddNewtonsoftJson(a => a.UseMemberCasing());
 

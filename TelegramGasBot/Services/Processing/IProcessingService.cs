@@ -1,11 +1,10 @@
 ﻿using System.Threading.Tasks;
-using TelegramGasBot.Enums;
-using TelegramGasBot.Services.Account.Models;
+using TelegramGasBot.Services.Command;
 
 namespace TelegramGasBot.Services.Processing
 {
     public interface IProcessingService
     {
-        Task<ProcessCommandResponseDto> ProcessCommandAsync(UserCommandEnum commandEnum, AccountModel accountDto, string message);
+        Task ProcessCommandAsync(GetCommandDto dto);
     }
 }

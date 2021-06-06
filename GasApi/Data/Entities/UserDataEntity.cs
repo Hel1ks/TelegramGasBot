@@ -19,5 +19,7 @@ namespace GasApi.Data.Entities
         public IEnumerable<ReadingEntity> Readings{ get; set; }
 
         public IEnumerable<PaymentEntity> Payments { get; set; }
+
+        public decimal Balance { get; set; }
     }
 }

@@ -15,5 +15,7 @@
         SendReadingsTab,
         СonfirmAddingPersonalAccountTab,
         СonfirmAddingPersonalAccountNoPersonalAccountAdded,
+        EneteringPaymentAmountTab,
+        CompletePaymentTab,
     }
 }
